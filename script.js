@@ -38,7 +38,25 @@ function gerarNumeros() {
   // Gera operações aleatórias para cada posição
   operacoes = [];
   for (let i = 0; i < quantidade - 1; i++) {
-    const op = opDisponiveis[Math.floor(Math.random() * opDisponiveis.length)];
+    let op = opDisponiveis[Math.floor(Math.random() * opDisponiveis.length)];
+    let n1 = numeros[i];
+    let n2 = numeros[i + 1];
+
+    // Ajuste especial para divisão
+    if (op === '/') {
+      // Tenta diminuir n2 até 2 para ter divisão inteira
+      while (n2 > 1 && n1 % n2 !== 0) {
+        n2--;
+      }
+
+      // Se não conseguir divisão inteira, troca para + ou -
+      if (n1 % n2 !== 0) {
+        op = opDisponiveis.find(o => o === '+' || o === '-') || '+';
+      }
+
+      numeros[i + 1] = n2; // atualiza o número ajustado
+    }
+
     operacoes.push(op);
   }
 
