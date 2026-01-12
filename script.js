@@ -44,17 +44,13 @@ function gerarNumeros() {
 
     // Ajuste especial para divisão
     if (op === '/') {
-      // Tenta diminuir n2 até 2 para ter divisão inteira
       while (n2 > 1 && n1 % n2 !== 0) {
         n2--;
       }
-
-      // Se não conseguir divisão inteira, troca para + ou -
       if (n1 % n2 !== 0) {
         op = opDisponiveis.find(o => o === '+' || o === '-') || '+';
       }
-
-      numeros[i + 1] = n2; // atualiza o número ajustado
+      numeros[i + 1] = n2;
     }
 
     operacoes.push(op);
@@ -102,9 +98,22 @@ function verificar() {
   const respostaUsuario = parseInt(respostaInput.value);
   const respostaCorreta = calcularExpressao();
 
-  // Log no console: expressão completa e resultado
-  console.log(`Expressão: ${numeros.join(' ')} com operações ${operacoes.join(' ')} = ${respostaCorreta}`);
+  // Monta a expressão igual aparece na tela
+  let expressaoTela = '' + numeros[0];
+  for(let i = 1; i < numeros.length; i++) {
+    expressaoTela += ` ${operacoes[i-1]} ${numeros[i]}`;
+  }
 
+  // Log no console: expressão + valor correto + valor que você enviou
+  if(respostaUsuario === respostaCorreta) {
+    console.log(`Expressão: ${expressaoTela} = ${respostaCorreta}`);
+    console.log(`Resposta ${respostaUsuario} Correto`);
+  } else {
+    console.log(`Expressão: ${expressaoTela} = ${respostaCorreta}`);
+    console.log(`Resposta ${respostaUsuario} Errado`);
+  }
+
+  // Feedback visual
   if (respostaUsuario === respostaCorreta) {
     feedback.textContent = '✅ Correto!';
     feedback.style.color = 'green';
