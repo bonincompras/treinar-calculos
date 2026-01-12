@@ -12,15 +12,15 @@ function gerarNumeros() {
 
   if (chance < 0.3) {
     quantidade = 2;
-  } else if (chance < 0.6) {
-    quantidade = Math.floor(Math.random() * 3) + 2; // 2 a 4
+  } else if (chance < 0.7) {
+    quantidade = Math.floor(Math.random() * 5) + 2; // 2 a 4
   } else {
     quantidade = Math.floor(Math.random() * 10) + 1; // 1 a 10
   }
 
   numeros = [];
   for (let i = 0; i < quantidade; i++) {
-    numeros.push(Math.floor(Math.random() * 50) + 1);
+    numeros.push(Math.floor(Math.random() * 100) + 1);
   }
 
   document.getElementById('soma').textContent = numeros.join(' + ');
@@ -74,6 +74,13 @@ function verificar() {
 
 // Evento do botão
 document.getElementById('okBtn').addEventListener('click', verificar);
+
+// Evento Enter no input
+document.getElementById('resposta').addEventListener('keydown', function(event) {
+  if (event.key === 'Enter') {
+    verificar();
+  }
+});
 
 // Inicia o treino
 gerarNumeros();
