@@ -102,6 +102,9 @@ function verificar() {
   const respostaUsuario = parseInt(respostaInput.value);
   const respostaCorreta = calcularExpressao();
 
+  // Log no console: expressão completa e resultado
+  console.log(`Expressão: ${numeros.join(' ')} com operações ${operacoes.join(' ')} = ${respostaCorreta}`);
+
   if (respostaUsuario === respostaCorreta) {
     feedback.textContent = '✅ Correto!';
     feedback.style.color = 'green';
