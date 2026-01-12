@@ -1,9 +1,11 @@
 let numeros = [];
 let consecutivos = 0;
 let recorde = localStorage.getItem('recorde') || 0;
+let tempoInicio = Date.now();
 
 document.getElementById('recorde').textContent = recorde;
 
+// Função para gerar números aleatórios
 function gerarNumeros() {
   const chance = Math.random();
   let quantidade;
@@ -24,16 +26,30 @@ function gerarNumeros() {
   document.getElementById('soma').textContent = numeros.join(' + ');
   document.getElementById('resposta').value = '';
   document.getElementById('resposta').focus();
+
+  // Reinicia o timer
+  tempoInicio = Date.now();
+  document.getElementById('timer').textContent = 'Tempo: 0s';
 }
 
+// Atualiza o timer a cada 0.1s
+setInterval(() => {
+  const tempoAtual = Math.floor((Date.now() - tempoInicio) / 1000);
+  document.getElementById('timer').textContent = `Tempo: ${tempoAtual}s`;
+}, 100);
+
+// Função para verificar a resposta
 function verificar() {
   const respostaInput = document.getElementById('resposta');
   const feedback = document.getElementById('feedback');
+  const inputField = document.getElementById('resposta');
   const respostaUsuario = parseInt(respostaInput.value);
   const respostaCorreta = numeros.reduce((a, b) => a + b, 0);
 
   if (respostaUsuario === respostaCorreta) {
     feedback.textContent = '✅ Correto!';
+    feedback.style.color = 'green';
+    inputField.style.backgroundColor = '#c8f7c5'; // verde claro
     consecutivos++;
     if (consecutivos > recorde) {
       recorde = consecutivos;
@@ -41,13 +57,19 @@ function verificar() {
       document.getElementById('recorde').textContent = recorde;
     }
   } else {
-    feedback.textContent = `❌ Errado. A resposta correta era ${respostaCorreta}.`;
+    feedback.textContent = `❌ Errado. Resposta correta: ${respostaCorreta}`;
+    feedback.style.color = 'red';
+    inputField.style.backgroundColor = '#f7c5c5'; // vermelho claro
     consecutivos = 0;
   }
 
   document.getElementById('consecutivos').textContent = consecutivos;
 
-  setTimeout(gerarNumeros, 1000); // nova soma após 1s
+  // Nova soma após 1s, e reseta cor do input
+  setTimeout(() => {
+    inputField.style.backgroundColor = 'white';
+    gerarNumeros();
+  }, 1000);
 }
 
 // Evento do botão
