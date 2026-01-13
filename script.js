@@ -25,6 +25,25 @@ function atualizarRecordeTela() {
 atualizarRecordeTela();
 
 // ========================
+// Calcula resultado parcial
+// ========================
+function calcularResultadoParcial(nums, ops) {
+  let resultado = nums[0];
+
+  for (let i = 1; i < nums.length; i++) {
+    const n = nums[i];
+    const op = ops[i - 1];
+
+    if (op === '+') resultado += n;
+    else if (op === '-') resultado -= n;
+    else if (op === '*') resultado *= n;
+    else break;
+  }
+
+  return resultado;
+}
+
+// ========================
 // Gera números e operações
 // ========================
 function gerarNumeros() {
@@ -49,27 +68,41 @@ function gerarNumeros() {
   numeros = [];
   operacoes = [];
 
-  // Gera primeiro número
+  // Primeiro número
   numeros.push(Math.floor(Math.random() * maxValor) + 1);
 
   for (let i = 1; i < quantidade; i++) {
     let op = opDisponiveis[Math.floor(Math.random() * opDisponiveis.length)];
     let num = Math.floor(Math.random() * maxValor) + 1;
 
-    // 🔒 Limite de multiplicação (resultado máximo 50)
-    if (op === '*' && numeros[i - 1] * num > 50) {
-      num = Math.floor(50 / numeros[i - 1]) || 1;
+    // ===== Multiplicação (controle de tamanho)
+    if (op === '*') {
+      const limite = 100;
+      if (numeros[i - 1] * num > limite) {
+        num = Math.max(2, Math.floor(limite / numeros[i - 1]));
+      }
     }
 
-    // 🔒 Divisão exata
+    // ===== Divisão baseada no resultado acumulado
     if (op === '/') {
-      let n1 = numeros[i - 1];
-      let n2 = num;
-      while (n2 > 1 && n1 % n2 !== 0) n2--;
-      if (n1 % n2 !== 0) {
+      const resultadoParcial = calcularResultadoParcial(
+        numeros.slice(0, i),
+        operacoes
+      );
+
+      let tentativas = 0;
+      while (
+        num > 1 &&
+        resultadoParcial % num !== 0 &&
+        tentativas < 20
+      ) {
+        num = Math.floor(Math.random() * 10) + 2;
+        tentativas++;
+      }
+
+      // Se não encontrou divisor válido, troca a operação
+      if (resultadoParcial % num !== 0) {
         op = '+';
-      } else {
-        num = n2;
       }
     }
 
@@ -94,7 +127,7 @@ function gerarNumeros() {
 }
 
 // ========================
-// Calcula expressão
+// Calcula expressão final
 // ========================
 function calcularExpressao() {
   let resultado = numeros[0];
@@ -191,11 +224,10 @@ function verificar() {
 }
 
 // ========================
-// 🔒 Bloqueio de input
+// Bloqueio de input
 // ========================
 document.getElementById('resposta').addEventListener('input', function () {
-  let valor = this.value.replace(/[^0-9-]/g, '');
-  valor = valor.replace(/(?!^)-/g, '');
+  let valor = this.value.replace(/[^0-9]/g, '');
   this.value = valor;
 });
 
