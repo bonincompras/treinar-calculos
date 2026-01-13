@@ -73,14 +73,13 @@ function gerarNumeros() {
 
   for (let i = 1; i < quantidade; i++) {
     let op = opDisponiveis[Math.floor(Math.random() * opDisponiveis.length)];
-    let num = Math.floor(Math.random() * maxValor) + 1;
+    let num;
 
-    // ===== Multiplicação (controle de tamanho)
+    // ===== Multiplicação: sempre 1 a 50
     if (op === '*') {
-      const limite = 100;
-      if (numeros[i - 1] * num > limite) {
-        num = Math.max(2, Math.floor(limite / numeros[i - 1]));
-      }
+      num = Math.floor(Math.random() * 50) + 1;
+    } else {
+      num = Math.floor(Math.random() * maxValor) + 1;
     }
 
     // ===== Divisão baseada no resultado acumulado
@@ -96,11 +95,11 @@ function gerarNumeros() {
         resultadoParcial % num !== 0 &&
         tentativas < 20
       ) {
-        num = Math.floor(Math.random() * 10) + 2;
+        num = Math.floor(Math.random() * maxValor) + 1;
         tentativas++;
       }
 
-      // Se não encontrou divisor válido, troca a operação
+      // Se não achou divisor válido, troca operação
       if (resultadoParcial % num !== 0) {
         op = '+';
       }
@@ -224,10 +223,21 @@ function verificar() {
 }
 
 // ========================
-// Bloqueio de input
+// Bloqueio de input (permite "-")
 // ========================
 document.getElementById('resposta').addEventListener('input', function () {
-  let valor = this.value.replace(/[^0-9]/g, '');
+  let valor = this.value;
+
+  // Remove tudo que não seja número ou "-"
+  valor = valor.replace(/[^0-9-]/g, '');
+
+  // Permite apenas um "-" no início
+  if (valor.includes('-')) {
+    valor =
+      (valor.startsWith('-') ? '-' : '') +
+      valor.replace(/-/g, '');
+  }
+
   this.value = valor;
 });
 
