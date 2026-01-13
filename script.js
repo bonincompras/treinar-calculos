@@ -1,65 +1,69 @@
 let numeros = [];
 let operacoes = [];
 let consecutivos = 0;
-let recorde = localStorage.getItem('recorde') || 0;
+
+let recorde = JSON.parse(localStorage.getItem('recorde')) || {
+  valor: 0,
+  tempoMedio: 0
+};
+
 let tempoInicio = Date.now();
+let temposCorretos = [];
 
-document.getElementById('recorde').textContent = recorde;
+// ========================
+// Atualiza recorde na tela
+// ========================
+function atualizarRecordeTela() {
+  document.getElementById('recorde').textContent =
+    `${recorde.valor} (${recorde.tempoMedio.toFixed(1)}s)`;
+}
 
-// Função para gerar números e operações
+atualizarRecordeTela();
+
+// ========================
+// Gera números e operações
+// ========================
 function gerarNumeros() {
   const maxValor = parseInt(document.getElementById('maxValor').value) || 50;
   const maxNumeros = parseInt(document.getElementById('maxNumeros').value) || 5;
 
-  // Pega operações selecionadas
   const opDisponiveis = [];
-  if(document.getElementById('add').checked) opDisponiveis.push('+');
-  if(document.getElementById('sub').checked) opDisponiveis.push('-');
-  if(document.getElementById('mul').checked) opDisponiveis.push('*');
-  if(document.getElementById('div').checked) opDisponiveis.push('/');
+  if (document.getElementById('add').checked) opDisponiveis.push('+');
+  if (document.getElementById('sub').checked) opDisponiveis.push('-');
+  if (document.getElementById('mul').checked) opDisponiveis.push('*');
+  if (document.getElementById('div').checked) opDisponiveis.push('/');
 
-  if(opDisponiveis.length === 0) {
+  if (opDisponiveis.length === 0) {
     alert("Selecione ao menos uma operação!");
     return;
   }
 
-  // Probabilidade linear da quantidade de números
   const minNumeros = 2;
-  const qtdOpcoes = maxNumeros - minNumeros + 1;
-  const index = Math.floor(Math.random() * qtdOpcoes);
-  const quantidade = minNumeros + index;
+  const quantidade = Math.floor(Math.random() * (maxNumeros - minNumeros + 1)) + minNumeros;
 
-  // Gera números aleatórios
   numeros = [];
   for (let i = 0; i < quantidade; i++) {
     numeros.push(Math.floor(Math.random() * maxValor) + 1);
   }
 
-  // Gera operações aleatórias para cada posição
   operacoes = [];
   for (let i = 0; i < quantidade - 1; i++) {
     let op = opDisponiveis[Math.floor(Math.random() * opDisponiveis.length)];
     let n1 = numeros[i];
     let n2 = numeros[i + 1];
 
-    // Ajuste especial para divisão
     if (op === '/') {
-      while (n2 > 1 && n1 % n2 !== 0) {
-        n2--;
-      }
-      if (n1 % n2 !== 0) {
-        op = opDisponiveis.find(o => o === '+' || o === '-') || '+';
-      }
+      while (n2 > 1 && n1 % n2 !== 0) n2--;
+      if (n1 % n2 !== 0) op = '+';
       numeros[i + 1] = n2;
     }
 
     operacoes.push(op);
   }
 
-  // Monta a expressão
   let expressao = '' + numeros[0];
-  for(let i = 1; i < numeros.length; i++) {
-    expressao += ` ${operacoes[i-1]} ${numeros[i]}`;
+  for (let i = 1; i < numeros.length; i++) {
+    expressao += ` ${operacoes[i - 1]} ${numeros[i]}`;
   }
 
   document.getElementById('soma').textContent = expressao;
@@ -67,83 +71,105 @@ function gerarNumeros() {
   document.getElementById('resposta').focus();
 
   tempoInicio = Date.now();
-  document.getElementById('timer').textContent = 'Tempo: 0s';
 }
 
-// Calcula expressão sequencialmente
+// ========================
+// Calcula expressão
+// ========================
 function calcularExpressao() {
   let resultado = numeros[0];
-  for(let i = 1; i < numeros.length; i++) {
+  for (let i = 1; i < numeros.length; i++) {
     const n = numeros[i];
-    const op = operacoes[i-1];
-    if(op === '+') resultado += n;
-    else if(op === '-') resultado -= n;
-    else if(op === '*') resultado *= n;
-    else if(op === '/') resultado = n !== 0 ? Math.floor(resultado / n) : resultado;
+    const op = operacoes[i - 1];
+
+    if (op === '+') resultado += n;
+    else if (op === '-') resultado -= n;
+    else if (op === '*') resultado *= n;
+    else if (op === '/') resultado = Math.floor(resultado / n);
   }
   return resultado;
 }
 
+// ========================
 // Timer
+// ========================
 setInterval(() => {
-  const tempoAtual = Math.floor((Date.now() - tempoInicio) / 1000);
-  document.getElementById('timer').textContent = `Tempo: ${tempoAtual}s`;
+  const tempo = Math.floor((Date.now() - tempoInicio) / 1000);
+  document.getElementById('timer').textContent = `Tempo: ${tempo}s`;
 }, 100);
 
+// ========================
 // Verifica resposta
+// ========================
 function verificar() {
-  const respostaInput = document.getElementById('resposta');
+  const input = document.getElementById('resposta');
   const feedback = document.getElementById('feedback');
-  const inputField = document.getElementById('resposta');
-  const respostaUsuario = parseInt(respostaInput.value);
+  const valor = input.value.trim();
+
+  if (valor === '') {
+    feedback.textContent = '⚠️ Digite uma resposta';
+    feedback.style.color = 'orange';
+    return;
+  }
+
+  if (!Number.isInteger(Number(valor))) {
+    feedback.textContent = '⚠️ Digite um número inteiro';
+    feedback.style.color = 'orange';
+    return;
+  }
+
+  const respostaUsuario = parseInt(valor);
   const respostaCorreta = calcularExpressao();
 
-  // Monta a expressão igual aparece na tela
-  let expressaoTela = '' + numeros[0];
-  for(let i = 1; i < numeros.length; i++) {
-    expressaoTela += ` ${operacoes[i-1]} ${numeros[i]}`;
-  }
-
-  // Log no console: expressão + valor correto + valor que você enviou
-  if(respostaUsuario === respostaCorreta) {
-    console.log(`Expressão: ${expressaoTela} = ${respostaCorreta}`);
-    console.log(`Resposta ${respostaUsuario} Correto`);
-  } else {
-    console.log(`Expressão: ${expressaoTela} = ${respostaCorreta}`);
-    console.log(`Resposta ${respostaUsuario} Errado`);
-  }
-
-  // Feedback visual
   if (respostaUsuario === respostaCorreta) {
     feedback.textContent = '✅ Correto!';
     feedback.style.color = 'green';
-    inputField.style.backgroundColor = '#c8f7c5';
     consecutivos++;
-    if (consecutivos > recorde) {
-      recorde = consecutivos;
-      localStorage.setItem('recorde', recorde);
-      document.getElementById('recorde').textContent = recorde;
+
+    const tempoResposta = (Date.now() - tempoInicio) / 1000;
+    temposCorretos.push(tempoResposta);
+
+    if (consecutivos > recorde.valor) {
+      const media =
+        temposCorretos.reduce((a, b) => a + b, 0) / temposCorretos.length;
+
+      recorde = {
+        valor: consecutivos,
+        tempoMedio: media
+      };
+
+      localStorage.setItem('recorde', JSON.stringify(recorde));
+      atualizarRecordeTela();
     }
   } else {
     feedback.textContent = `❌ Errado. Resposta correta: ${respostaCorreta}`;
     feedback.style.color = 'red';
-    inputField.style.backgroundColor = '#f7c5c5';
     consecutivos = 0;
+    temposCorretos = [];
   }
 
   document.getElementById('consecutivos').textContent = consecutivos;
 
-  setTimeout(() => {
-    inputField.style.backgroundColor = 'white';
-    gerarNumeros();
-  }, 1000);
+  setTimeout(gerarNumeros, 1000);
 }
 
-// Eventos
-document.getElementById('okBtn').addEventListener('click', verificar);
-document.getElementById('resposta').addEventListener('keydown', function(event) {
-  if(event.key === 'Enter') verificar();
+// ========================
+// 🔒 Bloqueio de letras
+// ========================
+document.getElementById('resposta').addEventListener('input', function () {
+  this.value = this.value.replace(/[^0-9-]/g, '');
 });
 
-// Inicia treino
+// ========================
+// Eventos
+// ========================
+document.getElementById('okBtn').addEventListener('click', verificar);
+
+document.getElementById('resposta').addEventListener('keydown', function (e) {
+  if (e.key === 'Enter') verificar();
+});
+
+// ========================
+// Início
+// ========================
 gerarNumeros();
