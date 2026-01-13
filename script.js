@@ -47,25 +47,37 @@ function gerarNumeros() {
     Math.floor(Math.random() * (maxNumeros - minNumeros + 1)) + minNumeros;
 
   numeros = [];
-  for (let i = 0; i < quantidade; i++) {
-    numeros.push(Math.floor(Math.random() * maxValor) + 1);
-  }
-
   operacoes = [];
-  for (let i = 0; i < quantidade - 1; i++) {
-    let op = opDisponiveis[Math.floor(Math.random() * opDisponiveis.length)];
-    let n1 = numeros[i];
-    let n2 = numeros[i + 1];
 
+  // Gera primeiro número
+  numeros.push(Math.floor(Math.random() * maxValor) + 1);
+
+  for (let i = 1; i < quantidade; i++) {
+    let op = opDisponiveis[Math.floor(Math.random() * opDisponiveis.length)];
+    let num = Math.floor(Math.random() * maxValor) + 1;
+
+    // 🔒 Limite de multiplicação (resultado máximo 50)
+    if (op === '*' && numeros[i - 1] * num > 50) {
+      num = Math.floor(50 / numeros[i - 1]) || 1;
+    }
+
+    // 🔒 Divisão exata
     if (op === '/') {
+      let n1 = numeros[i - 1];
+      let n2 = num;
       while (n2 > 1 && n1 % n2 !== 0) n2--;
-      if (n1 % n2 !== 0) op = '+';
-      numeros[i + 1] = n2;
+      if (n1 % n2 !== 0) {
+        op = '+';
+      } else {
+        num = n2;
+      }
     }
 
     operacoes.push(op);
+    numeros.push(num);
   }
 
+  // Mostra expressão
   let expressao = '' + numeros[0];
   for (let i = 1; i < numeros.length; i++) {
     expressao += ` ${operacoes[i - 1]} ${numeros[i]}`;
@@ -101,7 +113,7 @@ function calcularExpressao() {
 }
 
 // ========================
-// Timer (pausa fora da aba)
+// Timer
 // ========================
 setInterval(() => {
   if (!timerAtivo) return;
@@ -130,38 +142,28 @@ document.addEventListener('visibilitychange', () => {
 function verificar() {
   const input = document.getElementById('resposta');
   const feedback = document.getElementById('feedback');
-  const valor = input.value.trim();
 
-  if (valor === '' || valor === '-') {
-    feedback.textContent = '⚠️ Digite um número válido';
+  const respostaUsuario = Number(input.value);
+
+  if (!Number.isInteger(respostaUsuario)) {
+    feedback.textContent = '⚠️ Digite um número inteiro válido';
     feedback.style.color = 'orange';
     return;
   }
 
-  if (!Number.isInteger(Number(valor))) {
-    feedback.textContent = '⚠️ Digite apenas número inteiro';
-    feedback.style.color = 'orange';
-    return;
-  }
-
-  // Tempo final
   const tempoResposta =
     (tempoAcumulado + (Date.now() - tempoInicio)) / 1000;
 
-  const respostaUsuario = parseInt(valor);
   const respostaCorreta = calcularExpressao();
 
-  // Monta expressão visível
   let expressao = '' + numeros[0];
   for (let i = 1; i < numeros.length; i++) {
     expressao += ` ${operacoes[i - 1]} ${numeros[i]}`;
   }
-
   expressao += ` = ${respostaUsuario}`;
 
   if (respostaUsuario === respostaCorreta) {
-    feedback.innerHTML =
-      `${expressao}<br>✅ <strong>Correto!</strong>`;
+    feedback.innerHTML = `${expressao}<br>✅ <strong>Correto!</strong>`;
     feedback.style.color = 'green';
 
     consecutivos++;
@@ -171,11 +173,7 @@ function verificar() {
       const media =
         temposCorretos.reduce((a, b) => a + b, 0) / temposCorretos.length;
 
-      recorde = {
-        valor: consecutivos,
-        tempoMedio: media
-      };
-
+      recorde = { valor: consecutivos, tempoMedio: media };
       localStorage.setItem('recorde', JSON.stringify(recorde));
       atualizarRecordeTela();
     }
@@ -189,13 +187,11 @@ function verificar() {
   }
 
   document.getElementById('consecutivos').textContent = consecutivos;
-
   setTimeout(gerarNumeros, 1200);
 }
 
 // ========================
 // 🔒 Bloqueio de input
-// Apenas números e "-" no início
 // ========================
 document.getElementById('resposta').addEventListener('input', function () {
   let valor = this.value.replace(/[^0-9-]/g, '');
@@ -207,7 +203,6 @@ document.getElementById('resposta').addEventListener('input', function () {
 // Eventos
 // ========================
 document.getElementById('okBtn').addEventListener('click', verificar);
-
 document.getElementById('resposta').addEventListener('keydown', e => {
   if (e.key === 'Enter') verificar();
 });
