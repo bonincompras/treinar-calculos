@@ -21,7 +21,6 @@ function atualizarRecordeTela() {
   document.getElementById('recorde').textContent =
     `${recorde.valor} (${recorde.tempoMedio.toFixed(1)}s)`;
 }
-
 atualizarRecordeTela();
 
 // ========================
@@ -75,7 +74,7 @@ function gerarNumeros() {
     let op = opDisponiveis[Math.floor(Math.random() * opDisponiveis.length)];
     let num;
 
-    // ===== Multiplicação: sempre 1 a 50
+    // ===== Multiplicação: sempre 1–50
     if (op === '*') {
       num = Math.floor(Math.random() * 50) + 1;
     } else {
@@ -99,7 +98,6 @@ function gerarNumeros() {
         tentativas++;
       }
 
-      // Se não achou divisor válido, troca operação
       if (resultadoParcial % num !== 0) {
         op = '+';
       }
@@ -119,7 +117,6 @@ function gerarNumeros() {
   document.getElementById('resposta').value = '';
   document.getElementById('resposta').focus();
 
-  // Reinicia tempo
   tempoInicio = Date.now();
   tempoAcumulado = 0;
   timerAtivo = !document.hidden;
@@ -223,22 +220,18 @@ function verificar() {
 }
 
 // ========================
-// Bloqueio de input (permite "-")
+// INPUT — permite "-" corretamente
 // ========================
 document.getElementById('resposta').addEventListener('input', function () {
-  let valor = this.value;
+  let v = this.value;
 
   // Remove tudo que não seja número ou "-"
-  valor = valor.replace(/[^0-9-]/g, '');
+  v = v.replace(/[^0-9-]/g, '');
 
-  // Permite apenas um "-" no início
-  if (valor.includes('-')) {
-    valor =
-      (valor.startsWith('-') ? '-' : '') +
-      valor.replace(/-/g, '');
-  }
+  // Remove "-" que não esteja no início
+  v = v.replace(/(?!^)-/g, '');
 
-  this.value = valor;
+  this.value = v;
 });
 
 // ========================
