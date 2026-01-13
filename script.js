@@ -7,7 +7,11 @@ let recorde = JSON.parse(localStorage.getItem('recorde')) || {
   tempoMedio: 0
 };
 
-let tempoInicio = Date.now();
+// ===== Controle de tempo =====
+let tempoInicio = 0;
+let tempoAcumulado = 0;
+let timerAtivo = true;
+
 let temposCorretos = [];
 
 // ========================
@@ -39,7 +43,8 @@ function gerarNumeros() {
   }
 
   const minNumeros = 2;
-  const quantidade = Math.floor(Math.random() * (maxNumeros - minNumeros + 1)) + minNumeros;
+  const quantidade =
+    Math.floor(Math.random() * (maxNumeros - minNumeros + 1)) + minNumeros;
 
   numeros = [];
   for (let i = 0; i < quantidade; i++) {
@@ -70,7 +75,10 @@ function gerarNumeros() {
   document.getElementById('resposta').value = '';
   document.getElementById('resposta').focus();
 
+  // Reinicia tempo
   tempoInicio = Date.now();
+  tempoAcumulado = 0;
+  timerAtivo = !document.hidden;
 }
 
 // ========================
@@ -78,6 +86,7 @@ function gerarNumeros() {
 // ========================
 function calcularExpressao() {
   let resultado = numeros[0];
+
   for (let i = 1; i < numeros.length; i++) {
     const n = numeros[i];
     const op = operacoes[i - 1];
@@ -87,16 +96,33 @@ function calcularExpressao() {
     else if (op === '*') resultado *= n;
     else if (op === '/') resultado = Math.floor(resultado / n);
   }
+
   return resultado;
 }
 
 // ========================
-// Timer
+// Timer (pausa fora da aba)
 // ========================
 setInterval(() => {
-  const tempo = Math.floor((Date.now() - tempoInicio) / 1000);
+  if (!timerAtivo) return;
+
+  const agora = Date.now();
+  const tempo = Math.floor((tempoAcumulado + (agora - tempoInicio)) / 1000);
   document.getElementById('timer').textContent = `Tempo: ${tempo}s`;
 }, 100);
+
+// ========================
+// Detecta foco da aba
+// ========================
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    tempoAcumulado += Date.now() - tempoInicio;
+    timerAtivo = false;
+  } else {
+    tempoInicio = Date.now();
+    timerAtivo = true;
+  }
+});
 
 // ========================
 // Verifica resposta
@@ -106,27 +132,39 @@ function verificar() {
   const feedback = document.getElementById('feedback');
   const valor = input.value.trim();
 
-  if (valor === '') {
-    feedback.textContent = '⚠️ Digite uma resposta';
+  if (valor === '' || valor === '-') {
+    feedback.textContent = '⚠️ Digite um número válido';
     feedback.style.color = 'orange';
     return;
   }
 
   if (!Number.isInteger(Number(valor))) {
-    feedback.textContent = '⚠️ Digite um número inteiro';
+    feedback.textContent = '⚠️ Digite apenas número inteiro';
     feedback.style.color = 'orange';
     return;
   }
 
+  // Tempo final
+  const tempoResposta =
+    (tempoAcumulado + (Date.now() - tempoInicio)) / 1000;
+
   const respostaUsuario = parseInt(valor);
   const respostaCorreta = calcularExpressao();
 
-  if (respostaUsuario === respostaCorreta) {
-    feedback.textContent = '✅ Correto!';
-    feedback.style.color = 'green';
-    consecutivos++;
+  // Monta expressão visível
+  let expressao = '' + numeros[0];
+  for (let i = 1; i < numeros.length; i++) {
+    expressao += ` ${operacoes[i - 1]} ${numeros[i]}`;
+  }
 
-    const tempoResposta = (Date.now() - tempoInicio) / 1000;
+  expressao += ` = ${respostaUsuario}`;
+
+  if (respostaUsuario === respostaCorreta) {
+    feedback.innerHTML =
+      `${expressao}<br>✅ <strong>Correto!</strong>`;
+    feedback.style.color = 'green';
+
+    consecutivos++;
     temposCorretos.push(tempoResposta);
 
     if (consecutivos > recorde.valor) {
@@ -142,22 +180,27 @@ function verificar() {
       atualizarRecordeTela();
     }
   } else {
-    feedback.textContent = `❌ Errado. Resposta correta: ${respostaCorreta}`;
+    feedback.innerHTML =
+      `${expressao}<br>❌ Errado. Correto: <strong>${respostaCorreta}</strong>`;
     feedback.style.color = 'red';
+
     consecutivos = 0;
     temposCorretos = [];
   }
 
   document.getElementById('consecutivos').textContent = consecutivos;
 
-  setTimeout(gerarNumeros, 1000);
+  setTimeout(gerarNumeros, 1200);
 }
 
 // ========================
-// 🔒 Bloqueio de letras
+// 🔒 Bloqueio de input
+// Apenas números e "-" no início
 // ========================
 document.getElementById('resposta').addEventListener('input', function () {
-  this.value = this.value.replace(/[^0-9-]/g, '');
+  let valor = this.value.replace(/[^0-9-]/g, '');
+  valor = valor.replace(/(?!^)-/g, '');
+  this.value = valor;
 });
 
 // ========================
@@ -165,7 +208,7 @@ document.getElementById('resposta').addEventListener('input', function () {
 // ========================
 document.getElementById('okBtn').addEventListener('click', verificar);
 
-document.getElementById('resposta').addEventListener('keydown', function (e) {
+document.getElementById('resposta').addEventListener('keydown', e => {
   if (e.key === 'Enter') verificar();
 });
 
